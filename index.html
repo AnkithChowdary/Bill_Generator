@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bill Maker</title>
+  <link rel="stylesheet" href="style.css?v=5">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+</head>
+<body>
+  <div class="app">
+
+    <header class="header">
+      <div class="logo">🧾</div>
+      <div class="header-text">
+        <h1>Bill Maker</h1>
+        <p>Build your bill, tag your math, download as PDF.</p>
+      </div>
+      <button class="theme-toggle" id="themeToggle" title="Toggle theme">
+        <span class="theme-icon icon-moon">🌙</span>
+        <span class="theme-icon icon-sun">☀️</span>
+      </button>
+    </header>
+
+    <main class="main">
+
+      <!-- Bill History -->
+      <section class="card history-card" id="historyCard" style="display:none">
+        <div class="section-head">
+          <h2><span class="step">H</span> Saved Bills</h2>
+          <button type="button" class="btn btn-ghost" id="toggleHistory">Hide</button>
+        </div>
+        <div id="historyList" class="history-list"></div>
+        <p class="hint" id="historyEmpty" style="display:none">No saved bills yet.</p>
+      </section>
+
+      <section class="card">
+        <h2><span class="step">1</span> Bill Details</h2>
+        <div class="grid-2">
+          <label><span>Invoice No.</span>
+            <input type="text" id="invoiceNo" placeholder="Auto"></label>
+          <label><span>Company name</span>
+            <input type="text" id="companyName" value="Sri Karani Plastics"></label>
+          <label><span>Owner / Prepared by</span>
+            <input type="text" id="ownerName" value="Mahendra Singh Chowdary"></label>
+          <label><span>Bill date</span>
+            <input type="date" id="billDate"></label>
+          <label class="full-span"><span>Bill to (Customer / Company)</span>
+            <input type="text" id="customerName" placeholder="e.g. XYZ Corp"></label>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="section-head">
+          <h2><span class="step">2</span> Line Items</h2>
+          <button type="button" class="btn btn-ghost" id="addItem">+ Add item</button>
+        </div>
+        <div class="table-wrap">
+          <table class="data-table items-tbl" id="itemsTable">
+            <thead>
+              <tr>
+                <th class="c-desc">Description of Goods</th>
+                <th class="c-bags">Bags</th>
+                <th class="c-wgt">Wgt</th>
+                <th class="c-less">Less Wgt</th>
+                <th class="c-qty">Qty (kgs)</th>
+                <th class="c-rate">Rate</th>
+                <th class="c-amt">Amount</th>
+                <th class="c-rm"></th>
+              </tr>
+            </thead>
+            <tbody id="itemsBody"></tbody>
+            <tfoot id="itemsFoot" class="items-foot">
+              <tr>
+                <td class="foot-label">Total</td>
+                <td class="foot-val" id="footBags">0</td>
+                <td class="foot-val" id="footWgt">0.00</td>
+                <td class="foot-val" id="footLess">0.00</td>
+                <td class="foot-val" id="footQty">0.00</td>
+                <td class="foot-val"></td>
+                <td class="foot-val foot-amt" id="footAmt">0.00</td>
+                <td></td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+        <div class="row-subtotal">
+          <span>Subtotal</span>
+          <strong id="subtotalDisplay">₹ 0.00</strong>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="section-head">
+          <h2><span class="step">3</span> Adjustments &amp; Tags</h2>
+          <button type="button" class="btn btn-ghost" id="addAdj">+ Add adjustment</button>
+        </div>
+        <p class="hint">
+          Each row applies an operation to the running total.
+          Label each row so it appears in the bill (e.g. "GST 18 %", "Discount").
+        </p>
+        <div class="table-wrap">
+          <table class="data-table adj-tbl">
+            <thead>
+              <tr>
+                <th>Label / Tag</th>
+                <th class="col-op">Operation</th>
+                <th class="col-num">Value</th>
+                <th class="col-num">Result</th>
+                <th class="col-rm"></th>
+              </tr>
+            </thead>
+            <tbody id="adjBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="card summary-card">
+        <h2><span class="step">4</span> Final Total</h2>
+        <div class="grid-2">
+          <label><span>Label for final amount</span>
+            <input type="text" id="finalTag" value="Total Amount Payable"></label>
+          <div class="big-total-box">
+            <span class="big-total-label" id="finalTagDisplay">Total Amount Payable</span>
+            <span class="big-total-value" id="finalValue">₹ 0.00</span>
+          </div>
+        </div>
+        <div class="amt-words" id="amtWordsBox">
+          <span class="amt-words-label">Amount in words:</span>
+          <span class="amt-words-text" id="amtWordsText">Zero Only</span>
+        </div>
+      </section>
+
+      <div class="actions">
+        <button type="button" class="btn btn-primary" id="downloadPdfBtn">⬇ Download PDF</button>
+        <button type="button" class="btn btn-jpg" id="downloadJpgBtn">🖼 Download JPG</button>
+        <button type="button" class="btn btn-wa" id="shareWaBtn">📱 WhatsApp</button>
+        <button type="button" class="btn btn-save" id="saveBtn">💾 Save Bill</button>
+        <button type="button" class="btn btn-ghost" id="historyBtn">📋 History</button>
+        <button type="button" class="btn btn-ghost" id="clearBtn">Clear all</button>
+      </div>
+
+    </main>
+  </div>
+
+  <script src="app.js?v=5"></script>
+</body>
+</html>
+
+
+
